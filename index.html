@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Excel Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+    <script>
+        // Получаем параметры из URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const projectName = urlParams.get('projectName') || 'Объект';
+        const hashAlgorithm = urlParams.get('hashAlgorithm') || 'CRC-32';
+
+        // Создаем Excel файл
+        function generateExcel() {
+            const data = [
+                ['Наименование объекта', '', projectName, '', ''],
+                ['Номер п/п', 'Обозначение документа', 'Наименование документа', '', 'Номер последнего изменения (версии)'],
+                ['1', '', '', '', '1'],
+                [hashAlgorithm, '', '', '', ''],
+                ['Наименование файла', '', 'Дата и время последнего изменения файла', 'Размер файла, байт', 'Значение контрольной суммы'],
+                ['', '', '', '', ''],
+                ['Характер работы', 'Фамилия', 'Подпись', '', 'Дата подписания'],
+                ['Разработал', 'ФИО', '', '', ''],
+                ['Проверил', 'ФИО', '', '', ''],
+                ['ГИП', 'ФИО', '', '', ''],
+                ['Утвердил', 'ФИО', '', '', ''],
+                ['Согласовал', 'ФИО', '', '', ''],
+                ['Согласовал', 'ФИО', '', '', ''],
+                ['Информационно-удостоверяющий лист', '1_УЛ', '', 'Лист', 'Листов'],
+                ['', '', '', '', '']
+            ];
+
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Удостоверяющий лист");
+            
+            // Скачиваем файл
+            XLSX.writeFile(wb, `УЛ_${projectName}.xlsx`);
+        }
+
+        // Автоматически запускаем генерацию при загрузке
+        window.onload = generateExcel;
+    </script>
+</body>
+</html>
