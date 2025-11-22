@@ -4,124 +4,174 @@
     <title>Excel Generator</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        .excel-table {
+            border-collapse: collapse;
+            font-family: Calibri, Arial, sans-serif;
+            font-size: 11px;
+            table-layout: fixed;
+            width: 800px;
+            display: none;
+        }
+        .excel-table td {
+            border: 1px solid #000;
+            padding: 4px;
+            vertical-align: middle;
+            word-wrap: break-word;
+            white-space: normal;
+        }
+        .bold {
+            font-weight: bold;
+        }
+        .col-a { width: 160px; }
+        .col-b { width: 208px; }
+        .col-c { width: 228px; }
+        .col-d { width: 174px; }
+        .col-e { width: 139px; }
+        .row-20 { height: 20px; }
+        .row-24 { height: 24px; }
+    </style>
 </head>
 <body>
-    <script>
-        // Получаем параметры из URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const projectName = urlParams.get('projectName') || 'Объект';
-        const hashAlgorithm = urlParams.get('hashAlgorithm') || 'CRC-32';
+    <!-- Скрытая таблица для конвертации -->
+    <table id="excelTable" class="excel-table">
+        <!-- Строка 1 -->
+        <tr class="row-20">
+            <td colspan="2" class="col-a bold">Наименование объекта</td>
+            <td colspan="3" class="col-c bold" id="projectNameCell">Объект</td>
+        </tr>
+        <!-- Строка 2 -->
+        <tr class="row-20">
+            <td class="col-a bold">Номер п/п</td>
+            <td class="col-b bold">Обозначение документа</td>
+            <td colspan="2" class="col-c bold">Наименование документа</td>
+            <td class="col-e bold">Номер последнего изменения (версии)</td>
+        </tr>
+        <!-- Строка 3 -->
+        <tr class="row-20">
+            <td class="col-a">1</td>
+            <td class="col-b"></td>
+            <td colspan="2" class="col-c"></td>
+            <td class="col-e">1</td>
+        </tr>
+        <!-- Строка 4 -->
+        <tr class="row-20">
+            <td colspan="2" class="col-a" id="hashAlgorithmCell">CRC-32</td>
+            <td colspan="3" class="col-c"></td>
+        </tr>
+        <!-- Строка 5 -->
+        <tr class="row-20">
+            <td colspan="2" class="col-a bold">Наименование файла</td>
+            <td class="col-c bold">Дата и время последнего изменения файла</td>
+            <td class="col-d bold">Размер файла, байт</td>
+            <td class="col-e bold">Значение контрольной суммы</td>
+        </tr>
+        <!-- Строка 6 -->
+        <tr class="row-20">
+            <td colspan="2" class="col-a"></td>
+            <td class="col-c"></td>
+            <td class="col-d"></td>
+            <td class="col-e"></td>
+        </tr>
+        <!-- Строка 7 -->
+        <tr class="row-20">
+            <td class="col-a bold">Характер работы</td>
+            <td class="col-b bold">Фамилия</td>
+            <td colspan="2" class="col-c bold">Подпись</td>
+            <td class="col-e bold">Дата подписания</td>
+        </tr>
+        <!-- Строка 8 -->
+        <tr class="row-24">
+            <td class="col-a">Разработал</td>
+            <td class="col-b">ФИО</td>
+            <td colspan="2" class="col-c"></td>
+            <td class="col-e"></td>
+        </tr>
+        <!-- Строка 9 -->
+        <tr class="row-24">
+            <td class="col-a">Проверил</td>
+            <td class="col-b">ФИО</td>
+            <td colspan="2" class="col-c"></td>
+            <td class="col-e"></td>
+        </tr>
+        <!-- Строка 10 -->
+        <tr class="row-24">
+            <td class="col-a">ГИП</td>
+            <td class="col-b">ФИО</td>
+            <td colspan="2" class="col-c"></td>
+            <td class="col-e"></td>
+        </tr>
+        <!-- Строка 11 -->
+        <tr class="row-24">
+            <td class="col-a">Утвердил</td>
+            <td class="col-b">ФИО</td>
+            <td colspan="2" class="col-c"></td>
+            <td class="col-e"></td>
+        </tr>
+        <!-- Строка 12 -->
+        <tr class="row-20">
+            <td class="col-a">Согласовал</td>
+            <td class="col-b">ФИО</td>
+            <td colspan="2" class="col-c"></td>
+            <td class="col-e"></td>
+        </tr>
+        <!-- Строка 13 -->
+        <tr class="row-20">
+            <td class="col-a">Согласовал</td>
+            <td class="col-b">ФИО</td>
+            <td colspan="2" class="col-c"></td>
+            <td class="col-e"></td>
+        </tr>
+        <!-- Строка 14 -->
+        <tr class="row-20">
+            <td rowspan="2" class="col-a">Информационно-удостоверяющий лист</td>
+            <td rowspan="2" colspan="2" class="col-b">1_УЛ</td>
+            <td class="col-d">Лист</td>
+            <td class="col-e">Листов</td>
+        </tr>
+        <!-- Строка 15 -->
+        <tr class="row-20">
+            <td class="col-d"></td>
+            <td class="col-e"></td>
+        </tr>
+    </table>
 
+    <script>
         function generateExcel() {
             try {
-                // Создаем рабочую книгу
-                const wb = XLSX.utils.book_new();
-                
-                // Данные с объединенными ячейками
-                const data = [
-                    // Строка 1: A1-B1 объединены, C1-E1 объединены
-                    ['Наименование объекта', '', projectName, '', ''],
-                    // Строка 2: C2-D2 объединены
-                    ['Номер п/п', 'Обозначение документа', 'Наименование документа', '', 'Номер последнего изменения (версии)'],
-                    // Строка 3: C3-D3 объединены
-                    ['1', '', '', '', '1'],
-                    // Строка 4: A4-B4 объединены, C4-E4 объединены
-                    [hashAlgorithm, '', '', '', ''],
-                    // Строка 5: A5-B5 объединены
-                    ['Наименование файла', '', 'Дата и время последнего изменения файла', 'Размер файла, байт', 'Значение контрольной суммы'],
-                    // Строка 6: A6-B6 объединены
-                    ['', '', '', '', ''],
-                    // Строка 7: C7-D7 объединены
-                    ['Характер работы', 'Фамилия', 'Подпись', '', 'Дата подписания'],
-                    // Строка 8: C8-D8 объединены
-                    ['Разработал', 'ФИО', '', '', ''],
-                    // Строка 9: C9-D9 объединены
-                    ['Проверил', 'ФИО', '', '', ''],
-                    // Строка 10: C10-D10 объединены
-                    ['ГИП', 'ФИО', '', '', ''],
-                    // Строка 11: C11-D11 объединены
-                    ['Утвердил', 'ФИО', '', '', ''],
-                    // Строка 12: C12-D12 объединены
-                    ['Согласовал', 'ФИО', '', '', ''],
-                    // Строка 13: C13-D13 объединены
-                    ['Согласовал', 'ФИО', '', '', ''],
-                    // Строка 14: A14-A15 объединены, B14-C15 объединены
-                    ['Информационно-удостоверяющий лист', '1_УЛ', '', 'Лист', 'Листов'],
-                    // Строка 15
-                    ['', '', '', '', '']
-                ];
+                // Получаем параметры из URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectName = urlParams.get('projectName') || 'Объект';
+                const hashAlgorithm = urlParams.get('hashAlgorithm') || 'CRC-32';
 
-                // Создаем рабочий лист
-                const ws = XLSX.utils.aoa_to_sheet(data);
+                // Обновляем данные в таблице
+                document.getElementById('projectNameCell').textContent = projectName;
+                document.getElementById('hashAlgorithmCell').textContent = hashAlgorithm;
 
-                // Настраиваем объединение ячеек
-                ws['!merges'] = [
-                    // Строка 1
-                    { s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }, // A1-B1
-                    { s: { r: 0, c: 2 }, e: { r: 0, c: 4 } }, // C1-E1
-                    
-                    // Строка 2
-                    { s: { r: 1, c: 2 }, e: { r: 1, c: 3 } }, // C2-D2
-                    
-                    // Строка 3
-                    { s: { r: 2, c: 2 }, e: { r: 2, c: 3 } }, // C3-D3
-                    
-                    // Строка 4
-                    { s: { r: 3, c: 0 }, e: { r: 3, c: 1 } }, // A4-B4
-                    { s: { r: 3, c: 2 }, e: { r: 3, c: 4 } }, // C4-E4
-                    
-                    // Строка 5
-                    { s: { r: 4, c: 0 }, e: { r: 4, c: 1 } }, // A5-B5
-                    
-                    // Строка 6
-                    { s: { r: 5, c: 0 }, e: { r: 5, c: 1 } }, // A6-B6
-                    
-                    // Строка 7
-                    { s: { r: 6, c: 2 }, e: { r: 6, c: 3 } }, // C7-D7
-                    
-                    // Строки 8-13
-                    { s: { r: 7, c: 2 }, e: { r: 7, c: 3 } }, // C8-D8
-                    { s: { r: 8, c: 2 }, e: { r: 8, c: 3 } }, // C9-D9
-                    { s: { r: 9, c: 2 }, e: { r: 9, c: 3 } }, // C10-D10
-                    { s: { r: 10, c: 2 }, e: { r: 10, c: 3 } }, // C11-D11
-                    { s: { r: 11, c: 2 }, e: { r: 11, c: 3 } }, // C12-D12
-                    { s: { r: 12, c: 2 }, e: { r: 12, c: 3 } }, // C13-D13
-                    
-                    // Строка 14
-                    { s: { r: 13, c: 0 }, e: { r: 14, c: 0 } }, // A14-A15
-                    { s: { r: 13, c: 1 }, e: { r: 14, c: 2 } }  // B14-C15
-                ];
+                // Показываем таблицу (нужно для конвертации)
+                const table = document.getElementById('excelTable');
+                table.style.display = 'table';
 
-                // Настраиваем ширину колонок
-                ws['!cols'] = [
-                    { wch: 21.86 }, // A
-                    { wch: 28.43 }, // B
-                    { wch: 31.29 }, // C
-                    { wch: 23.86 }, // D
-                    { wch: 19.00 }  // E
-                ];
+                // Конвертируем HTML таблицу в Excel
+                const wb = XLSX.utils.table_to_book(table, { sheet: "Удостоверяющий лист" });
 
-                // Настраиваем высоту строк
-                ws['!rows'] = [
-                    { hpt: 20 }, { hpt: 20 }, { hpt: 20 }, { hpt: 20 }, { hpt: 20 }, { hpt: 20 }, { hpt: 20 },
-                    { hpt: 24 }, { hpt: 24 }, { hpt: 24 }, { hpt: 24 }, { hpt: 20 }, { hpt: 20 }, { hpt: 20 }, { hpt: 20 }
-                ];
-
-                // Добавляем стили для жирного шрифта
-                const boldCells = ['A1', 'C1', 'A2', 'B2', 'C2', 'E2', 'A5', 'C5', 'D5', 'E5', 'A7', 'B7', 'C7', 'E7'];
-                boldCells.forEach(cell => {
-                    if (ws[cell]) {
-                        if (!ws[cell].s) ws[cell].s = {};
-                        ws[cell].s.font = { bold: true };
-                    }
-                });
-
-                // Добавляем лист в книгу
-                XLSX.utils.book_append_sheet(wb, ws, "Удостоверяющий лист");
+                // Настраиваем ширину колонок (дополнительная гарантия)
+                if (!wb.Sheets['Удостоверяющий лист']['!cols']) {
+                    wb.Sheets['Удостоверяющий лист']['!cols'] = [
+                        { wch: 21.86 }, { wch: 28.43 }, { wch: 31.29 }, { wch: 23.86 }, { wch: 19.00 }
+                    ];
+                }
 
                 // Генерируем и скачиваем файл
-                const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-                const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const wbout = XLSX.write(wb, { 
+                    bookType: 'xlsx', 
+                    type: 'array',
+                    cellStyles: true 
+                });
+                
+                const blob = new Blob([wbout], { 
+                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+                });
                 
                 saveAs(blob, `УЛ_${projectName}.xlsx`);
                 
@@ -131,8 +181,8 @@
             }
         }
 
-        // Запускаем генерацию
-        generateExcel();
+        // Запускаем генерацию при загрузке
+        window.onload = generateExcel;
     </script>
 </body>
 </html>
