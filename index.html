@@ -2,7 +2,8 @@
 <html>
 <head>
     <title>Excel Generator</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </head>
 <body>
     <script>
@@ -11,36 +12,168 @@
         const projectName = urlParams.get('projectName') || 'Объект';
         const hashAlgorithm = urlParams.get('hashAlgorithm') || 'CRC-32';
 
-        // Создаем Excel файл
-        function generateExcel() {
-            const data = [
-                ['Наименование объекта', '', projectName, '', ''],
-                ['Номер п/п', 'Обозначение документа', 'Наименование документа', '', 'Номер последнего изменения (версии)'],
-                ['1', '', '', '', '1'],
-                [hashAlgorithm, '', '', '', ''],
-                ['Наименование файла', '', 'Дата и время последнего изменения файла', 'Размер файла, байт', 'Значение контрольной суммы'],
-                ['', '', '', '', ''],
-                ['Характер работы', 'Фамилия', 'Подпись', '', 'Дата подписания'],
-                ['Разработал', 'ФИО', '', '', ''],
-                ['Проверил', 'ФИО', '', '', ''],
-                ['ГИП', 'ФИО', '', '', ''],
-                ['Утвердил', 'ФИО', '', '', ''],
-                ['Согласовал', 'ФИО', '', '', ''],
-                ['Согласовал', 'ФИО', '', '', ''],
-                ['Информационно-удостоверяющий лист', '1_УЛ', '', 'Лист', 'Листов'],
-                ['', '', '', '', '']
-            ];
+        async function generateExcel() {
+            try {
+                const workbook = new ExcelJS.Workbook();
+                const worksheet = workbook.addWorksheet('Удостоверяющий лист');
 
-            const ws = XLSX.utils.aoa_to_sheet(data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Удостоверяющий лист");
-            
-            // Скачиваем файл
-            XLSX.writeFile(wb, `УЛ_${projectName}.xlsx`);
+                // Настраиваем страницу
+                worksheet.pageSetup = {
+                    orientation: 'portrait',
+                    paperSize: 9, // A4
+                    fitToPage: true,
+                    fitToWidth: 1,
+                    margins: { left: 0.25, right: 0.25, top: 0.25, bottom: 0.25 }
+                };
+
+                // Устанавливаем ширину колонок
+                worksheet.columns = [
+                    { width: 21.86 }, // A
+                    { width: 28.43 }, // B
+                    { width: 31.29 }, // C
+                    { width: 23.86 }, // D
+                    { width: 19.00 }  // E
+                ];
+
+                // Базовый стиль
+                const baseStyle = {
+                    font: { name: 'Calibri', size: 11 },
+                    alignment: { vertical: 'middle', wrapText: true },
+                    border: {
+                        top: { style: 'thin' }, left: { style: 'thin' },
+                        bottom: { style: 'thin' }, right: { style: 'thin' }
+                    }
+                };
+
+                const boldStyle = {
+                    ...baseStyle,
+                    font: { ...baseStyle.font, bold: true }
+                };
+
+                // Строка 1
+                let row = worksheet.getRow(1);
+                row.height = 20;
+                worksheet.mergeCells('A1:B1');
+                worksheet.mergeCells('C1:E1');
+                setCellValue(worksheet, 'A1', 'Наименование объекта', boldStyle);
+                setCellValue(worksheet, 'C1', projectName, boldStyle);
+
+                // Строка 2
+                row = worksheet.getRow(2);
+                row.height = 20;
+                worksheet.mergeCells('C2:D2');
+                setCellValue(worksheet, 'A2', 'Номер п/п', boldStyle);
+                setCellValue(worksheet, 'B2', 'Обозначение документа', boldStyle);
+                setCellValue(worksheet, 'C2', 'Наименование документа', boldStyle);
+                setCellValue(worksheet, 'E2', 'Номер последнего изменения (версии)', boldStyle);
+
+                // Строка 3
+                row = worksheet.getRow(3);
+                row.height = 20;
+                worksheet.mergeCells('C3:D3');
+                setCellValue(worksheet, 'A3', '1', baseStyle);
+                setCellValue(worksheet, 'B3', '', baseStyle);
+                setCellValue(worksheet, 'C3', '', baseStyle);
+                setCellValue(worksheet, 'E3', '1', baseStyle);
+
+                // Строка 4
+                row = worksheet.getRow(4);
+                row.height = 20;
+                worksheet.mergeCells('A4:B4');
+                worksheet.mergeCells('C4:E4');
+                setCellValue(worksheet, 'A4', hashAlgorithm, baseStyle);
+                setCellValue(worksheet, 'C4', '', baseStyle);
+
+                // Строка 5
+                row = worksheet.getRow(5);
+                row.height = 20;
+                worksheet.mergeCells('A5:B5');
+                setCellValue(worksheet, 'A5', 'Наименование файла', boldStyle);
+                setCellValue(worksheet, 'C5', 'Дата и время последнего изменения файла', boldStyle);
+                setCellValue(worksheet, 'D5', 'Размер файла, байт', boldStyle);
+                setCellValue(worksheet, 'E5', 'Значение контрольной суммы', boldStyle);
+
+                // Строка 6
+                row = worksheet.getRow(6);
+                row.height = 20;
+                worksheet.mergeCells('A6:B6');
+                setCellValue(worksheet, 'A6', '', baseStyle);
+                setCellValue(worksheet, 'C6', '', baseStyle);
+                setCellValue(worksheet, 'D6', '', baseStyle);
+                setCellValue(worksheet, 'E6', '', baseStyle);
+
+                // Строка 7
+                row = worksheet.getRow(7);
+                row.height = 20;
+                worksheet.mergeCells('C7:D7');
+                setCellValue(worksheet, 'A7', 'Характер работы', boldStyle);
+                setCellValue(worksheet, 'B7', 'Фамилия', boldStyle);
+                setCellValue(worksheet, 'C7', 'Подпись', boldStyle);
+                setCellValue(worksheet, 'E7', 'Дата подписания', boldStyle);
+
+                // Строки 8-13
+                const rows8to13 = [
+                    ['Разработал', 'ФИО', '', '', ''],
+                    ['Проверил', 'ФИО', '', '', ''],
+                    ['ГИП', 'ФИО', '', '', ''],
+                    ['Утвердил', 'ФИО', '', '', ''],
+                    ['Согласовал', 'ФИО', '', '', ''],
+                    ['Согласовал', 'ФИО', '', '', '']
+                ];
+
+                rows8to13.forEach((rowData, index) => {
+                    const rowNum = 8 + index;
+                    const row = worksheet.getRow(rowNum);
+                    row.height = index < 4 ? 24 : 20; // Строки 8-11 высота 24, остальные 20
+                    
+                    worksheet.mergeCells(`C${rowNum}:D${rowNum}`);
+                    setCellValue(worksheet, `A${rowNum}`, rowData[0], baseStyle);
+                    setCellValue(worksheet, `B${rowNum}`, rowData[1], baseStyle);
+                    setCellValue(worksheet, `C${rowNum}`, rowData[2], baseStyle);
+                    setCellValue(worksheet, `E${rowNum}`, rowData[4], baseStyle);
+                });
+
+                // Строка 14
+                row = worksheet.getRow(14);
+                row.height = 20;
+                worksheet.mergeCells('A14:A15');
+                worksheet.mergeCells('B14:C15');
+                setCellValue(worksheet, 'A14', 'Информационно-удостоверяющий лист', baseStyle);
+                setCellValue(worksheet, 'B14', '1_УЛ', baseStyle);
+                setCellValue(worksheet, 'D14', 'Лист', baseStyle);
+                setCellValue(worksheet, 'E14', 'Листов', baseStyle);
+
+                // Строка 15
+                row = worksheet.getRow(15);
+                row.height = 20;
+                setCellValue(worksheet, 'D15', '', baseStyle);
+                setCellValue(worksheet, 'E15', '', baseStyle);
+
+                // Функция для установки значений ячеек со стилями
+                function setCellValue(ws, cell, value, style) {
+                    const cellObj = ws.getCell(cell);
+                    cellObj.value = value;
+                    cellObj.font = style.font;
+                    cellObj.alignment = style.alignment;
+                    cellObj.border = style.border;
+                }
+
+                // Генерируем и скачиваем файл
+                const buffer = await workbook.xlsx.writeBuffer();
+                const blob = new Blob([buffer], { 
+                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+                });
+                
+                saveAs(blob, `УЛ_${projectName}.xlsx`);
+                
+            } catch (error) {
+                console.error('Ошибка:', error);
+                alert('Ошибка при создании файла: ' + error.message);
+            }
         }
 
-        // Автоматически запускаем генерацию при загрузке
-        window.onload = generateExcel;
+        // Запускаем генерацию
+        generateExcel();
     </script>
 </body>
 </html>
